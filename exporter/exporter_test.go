@@ -1,4 +1,4 @@
-package utils_test
+package exporter_test
 
 import (
 	"fmt"
@@ -7,12 +7,12 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
+	"gitlab.com/dkub/ssmparams/exporter"
 	"gitlab.com/dkub/ssmparams/types"
-	"gitlab.com/dkub/ssmparams/utils"
 )
 
 func TestMapBuilder(t *testing.T) {
-	result, _ := utils.BuildYamlFromParams(generateTestData())
+	result, _ := exporter.BuildYamlFromParams(generateTestData())
 	fmt.Println(string(result))
 }
 
@@ -38,6 +38,16 @@ func generateTestData() []types.ParameterPackage {
 				Tier:             ssmTypes.ParameterTierStandard,
 				Policies:         []ssmTypes.ParameterInlinePolicy{},
 				DataType:         aws.String("text"),
+			},
+			Tags: []ssmTypes.Tag{
+				{
+					Key:   aws.String("ATag"),
+					Value: aws.String("A value"),
+				},
+				{
+					Key:   aws.String("AnotherTag"),
+					Value: aws.String("Another value"),
+				},
 			},
 		},
 		{

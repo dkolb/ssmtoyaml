@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
 
+	"gitlab.com/dkub/ssmparams/exporter"
 	"gitlab.com/dkub/ssmparams/types"
-	"gitlab.com/dkub/ssmparams/utils"
 )
 
 type ExportApp struct {
@@ -38,7 +38,10 @@ func (e *ExportApp) Exec() error {
 		return err
 	}
 	var yaml []byte
-	yaml, err = utils.BuildYamlFromParams(params)
+	yaml, err = exporter.BuildYamlFromParams(params)
+	if err != nil {
+		panic(err)
+	}
 	if err = os.WriteFile(e.ExportFile, yaml, 0666); err != nil {
 		log.Fatal(err)
 	}
@@ -76,13 +79,19 @@ func (e *ExportApp) gatherParameters() ([]types.ParameterPackage, error) {
 
 func (e *ExportApp) generatePackage(parameter ssmTypes.Parameter) (types.ParameterPackage, error) {
 	pkg := types.ParameterPackage{Parameter: parameter}
+	var err error
 	if parameter.Type == ssmTypes.ParameterTypeSecureString {
-		var err error
 		pkg.Metadata, err = e.describeParameter(parameter)
 		if err != nil {
 			return types.ParameterPackage{}, err
 		}
 	}
+
+	pkg.Tags, err = e.getTags(parameter)
+	if err != nil {
+		return types.ParameterPackage{}, err
+	}
+
 	return pkg, nil
 }
 
@@ -104,4 +113,15 @@ func (e *ExportApp) describeParameter(parameter ssmTypes.Parameter) (ssmTypes.Pa
 	}
 
 	return describeResponse.Parameters[0], nil
+}
+
+func (e *ExportApp) getTags(parameter ssmTypes.Parameter) ([]ssmTypes.Tag, error) {
+	tagResponse, err := e.client.ListTagsForResource(
+		context.TODO(),
+		&ssm.ListTagsForResourceInput{
+			ResourceId:   parameter.Name,
+			ResourceType: ssmTypes.ResourceTypeForTaggingParameter,
+		},
+	)
+	return tagResponse.TagList, err
 }

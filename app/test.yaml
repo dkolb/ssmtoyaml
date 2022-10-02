@@ -1,0 +1,9 @@
+Application:
+    dev:
+        GithubPassword:
+            value: AQICAHhSJO5I5j2Nos6IZEd625gK8gNvolF3/+YgRL6YotsQfAH8/v4KlezUhgSgzyA/lB6ZAAAAcDBuBgkqhkiG9w0BBwagYTBfAgEAMFoGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMhHhbLpuGaYE8Oy2TAgEQgC1egk7BukjRdFOwo9oFbLKB74QERjgWbHZ9tTKrEb42HCwLkcBfeEVvGLwDjM8=
+            type: SecureString
+            key: alias/basic-data-symmectric
+            tags:
+                ATag: tag
+                AnotherTag: tag

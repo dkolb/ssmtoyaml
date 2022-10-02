@@ -1,6 +1,8 @@
 package app_test
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"gitlab.com/dkub/ssmparams/app"
@@ -17,6 +19,9 @@ Application:
             value: Stuff
             type: SecureString
             key: alias/basic-data-symmetric
+						tags:
+								ATag: A Value
+								AnotherTag: Another value
         GithubUsername:
             value: Stuff
             type: String
@@ -30,8 +35,12 @@ Application:
 `
 
 func TestExportApp(t *testing.T) {
+	env := os.Environ()
+	for _, e := range env {
+		fmt.Println(e)
+	}
 	a := &app.ExportApp{
-		SsmPathRoot:    "/PingFederate/e2e",
+		SsmPathRoot:    "/Application",
 		ExportFile:     "test.yaml",
 		Decrypt:        true,
 		ForceOverwrite: true,
