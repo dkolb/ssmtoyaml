@@ -5,12 +5,26 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch TestExportApp",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/app/export_test.go",
+      "args": [
+        "-test.run",
+        "TestExportApp"
+      ],
+      "showLog": true,
+      "envFile": "${workspaceFolder}/dev.env"
+    },
+    {
       "name": "Launch Package",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "program": "${fileDirname}",
-      "envFile": "${workspaceFolder}/dev.env"
+      "envFile": "${workspaceFolder}/dev.env",
+      "showLog": true
     }
   ]
 }

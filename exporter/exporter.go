@@ -1,10 +1,9 @@
-package utils
+package exporter
 
 import (
 	"fmt"
 	"strings"
 
-	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"gitlab.com/dkub/ssmparams/types"
 	"gopkg.in/yaml.v3"
 )
@@ -25,35 +24,31 @@ func BuildYamlFromParams(parameters []types.ParameterPackage) ([]byte, error) {
 			pathElements = pathElements[1:]
 		}
 		fmt.Println("Got path elements:", pathElements)
-		param := makeOrFindParam(root, pathElements)
-		(*param).Value = *parameter.Parameter.Value
-		(*param).Type = parameter.Parameter.Type
-		if (*param).Type == ssmTypes.ParameterTypeSecureString && parameter.Metadata.KeyId != nil {
-			(*param).Key = *parameter.Metadata.KeyId
+		err := makePathNodesAndParam(root, pathElements, parameter)
+		if err != nil {
+			return []byte{}, err
 		}
 	}
 
-	d, err := yaml.Marshal(root)
-	return string(d), err
+	return yaml.Marshal(root)
 }
 
-func makeOrFindParam(root pathNode, pathElements []string) *types.SerialParameter {
+func makePathNodesAndParam(root pathNode, pathElements []string, parameter types.ParameterPackage) error {
 	length := len(pathElements)
 
 	if length == 0 {
-		panic("makeOrFindLeaf given pathElements with a length of 0.")
+		panic("makePathNodesAndParam given pathElements with a length of 0.")
 	}
 
 	element := pathElements[0]
 	if length == 1 { //Base case, retrieve or create leafNode.
 		rawParam := (*root)[element]
 		if rawParam == nil {
-			param := &types.SerialParameter{}
+			param := types.NewSerialParameterFromPackage(parameter)
 			(*root)[element] = param
-			return param
+			return nil
 		} else {
-			param := rawParam.(*types.SerialParameter)
-			return param
+			return fmt.Errorf("Duplicate SSM parameter \"%s\" in export map.", *parameter.Parameter.Name)
 		}
 	}
 	// Navigate down instead
@@ -61,9 +56,9 @@ func makeOrFindParam(root pathNode, pathElements []string) *types.SerialParamete
 	if nextNode == nil {
 		newNode := makePathNode()
 		(*root)[element] = newNode
-		return makeOrFindParam(newNode, pathElements[1:])
+		return makePathNodesAndParam(newNode, pathElements[1:], parameter)
 	} else {
 		castNode := nextNode.(pathNode)
-		return makeOrFindParam(castNode, pathElements[1:])
+		return makePathNodesAndParam(castNode, pathElements[1:], parameter)
 	}
 }
