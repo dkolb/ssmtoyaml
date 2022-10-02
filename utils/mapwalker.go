@@ -33,7 +33,7 @@ func walkNode(nodeNames []string, node interface{}, visitNode NodeVisitor, visit
 		if descend {
 			for childNodeName, childNode := range castNode {
 				childNodeNames := append(nodeNames, childNodeName)
-				err = walkNode(childNodeNames, childNode, visitNode, visitLeaf)
+				return walkNode(childNodeNames, childNode, visitNode, visitLeaf)
 				if err != nil {
 					return err
 				}
@@ -43,7 +43,7 @@ func walkNode(nodeNames []string, node interface{}, visitNode NodeVisitor, visit
 		castLeaf := node.(string)
 		err := visitLeaf(nodeNames, castLeaf)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 	return nil
