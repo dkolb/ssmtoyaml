@@ -6,12 +6,12 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"gopkg.in/yaml.v3"
 
 	"gitlab.com/dkub/ssmparams/types"
+	"gitlab.com/dkub/ssmparams/utils"
 )
 
 type ExportApp struct {
@@ -24,26 +24,30 @@ type ExportApp struct {
 }
 
 func (e *ExportApp) Exec() error {
-	config, err := config.LoadDefaultConfig(
-		context.TODO(),
-		config.WithRegion(e.Region),
-	)
+	var err error
+	e.client, err = utils.InitializeSsmClient(&e.Region)
 	if err != nil {
-		log.Fatal("Error loading AWS config...", err)
+		return err
 	}
-	e.client = ssm.NewFromConfig(config)
+
+	//Gather parameters under path.
 	var params []types.AwsParameterPackage
 	params, err = e.gatherParameters()
 	if err != nil {
 		return err
 	}
+
+	//Generate YAML.
 	var yaml []byte
 	yaml, err = e.BuildYamlFromParamPackages(params)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	//Write out to file.
 	if err = os.WriteFile(e.ExportFile, yaml, 0666); err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 	return nil
 }

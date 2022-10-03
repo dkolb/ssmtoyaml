@@ -6,8 +6,11 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.16.16
 	github.com/aws/aws-sdk-go-v2/config v1.17.8
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.30.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/spf13/cobra v1.5.0
 )
+
+require github.com/hashicorp/errwrap v1.0.0 // indirect
 
 require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.21 // indirect

@@ -18,7 +18,7 @@ var getCmd = &cobra.Command{
 into a well structured YAML document for ease of editing or copying between
 environments.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		export := &app.ExportApp{
+		exportApp := &app.ExportApp{
 			SsmPathRoot:    PathRoot,
 			ExportFile:     FilePath,
 			Decrypt:        Decrypt,
@@ -26,7 +26,7 @@ environments.`,
 			Region:         Region,
 		}
 
-		err := export.Exec()
+		err := exportApp.Exec()
 		if err != nil {
 			panic(err)
 		} else {
@@ -79,4 +79,6 @@ func init() {
 		"/",
 		"A path root to retrieve from.",
 	)
+
+	getCmd.MarkFlagFilename("file")
 }

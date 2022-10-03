@@ -12,32 +12,6 @@ import (
 	"gitlab.com/dkub/ssmparams/types"
 )
 
-var testYaml string = `AnotherApplication:
-    dev:
-        SomeSetting:
-            value: AnotherSetting
-            type: String
-Application:
-    dev:
-        GithubPassword:
-            value: Stuff
-            type: SecureString
-            key: alias/basic-data-symmetric
-						tags:
-								ATag: A Value
-								AnotherTag: Another value
-        GithubUsername:
-            value: Stuff
-            type: String
-    prod:
-        GithubPassword:
-            value: Stuff
-            type: SecureString
-        GithubUsername:
-            value: Stuff
-            type: String
-`
-
 func TestExec(t *testing.T) {
 	env := os.Environ()
 	for _, e := range env {

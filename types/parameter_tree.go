@@ -2,8 +2,10 @@ package types
 
 import (
 	"fmt"
+	"log"
 
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
+	"github.com/hashicorp/go-multierror"
 	"gopkg.in/yaml.v3"
 )
 
@@ -14,6 +16,7 @@ type ParameterTree struct {
 
 // Explicit interface implementation
 var _ yaml.Marshaler = (*ParameterTree)(nil)
+var _ yaml.Unmarshaler = (*ParameterTree)(nil)
 
 func NewParameterTree() *ParameterTree {
 	return &ParameterTree{
@@ -29,6 +32,15 @@ func (p *ParameterTree) AddParamFromPackage(pkg AwsParameterPackage) {
 
 func (p *ParameterTree) MarshalYAML() (interface{}, error) {
 	return p.root.MarshalYAML()
+}
+
+func (p *ParameterTree) UnmarshalYAML(value *yaml.Node) error {
+	p.root = NewParameterTreeNodePath()
+	if value.Kind == yaml.MappingNode {
+		return p.root.UnmarshalYAML(value)
+	} else {
+		return fmt.Errorf("root node must be !!map")
+	}
 }
 
 type ParameterTreeTags map[string]string
@@ -73,6 +85,7 @@ type ParameterTreeNode struct {
 
 // Explicit interface implementation check
 var _ yaml.Marshaler = (*ParameterTreeNode)(nil)
+var _ yaml.Unmarshaler = (*ParameterTreeNode)(nil)
 
 func NewParameterTreeNodeValue(value *ParameterTreeValue) *ParameterTreeNode {
 	return &ParameterTreeNode{
@@ -84,7 +97,7 @@ func NewParameterTreeNodeValue(value *ParameterTreeValue) *ParameterTreeNode {
 func NewParameterTreeNodePath() *ParameterTreeNode {
 	return &ParameterTreeNode{
 		nodeType: ParameterTreeNodeTypePath,
-		children: make(map[string]*ParameterTreeNode),
+		children: map[string]*ParameterTreeNode{},
 	}
 }
 
@@ -132,6 +145,18 @@ func (n *ParameterTreeNode) AddChildValueNode(name string, value *ParameterTreeV
 		return nil, err
 	}
 	newChild := NewParameterTreeNodeValue(value)
+	n.children[name] = newChild
+	return newChild, nil
+}
+
+func (n *ParameterTreeNode) addBlankChildNode(name string) (*ParameterTreeNode, error) {
+	err := n.canAddChild(name)
+	if err != nil {
+		return nil, err
+	}
+	newChild := &ParameterTreeNode{
+		children: map[string]*ParameterTreeNode{},
+	}
 	n.children[name] = newChild
 	return newChild, nil
 }
@@ -187,4 +212,93 @@ func (n *ParameterTreeNode) MarshalYAML() (interface{}, error) {
 	} else {
 		return nil, nil
 	}
+}
+
+func (n *ParameterTreeNode) UnmarshalYAML(value *yaml.Node) error {
+	// Content is always scalar node then map node for path nodes,
+	// or it's an even number of scalars for a value node.
+	// We don't have any arrays in our schema.
+	if value.Kind != yaml.MappingNode {
+		return fmt.Errorf("node '%s' is not a map", value.Value)
+	}
+
+	// First attempt to decode myself as a ParameterTreeNodeTypeValue.
+	if isValueNode(value) {
+		n.value = &ParameterTreeValue{}
+		err := value.Decode(n.value)
+		if err != nil {
+			return err
+		}
+		n.nodeType = ParameterTreeNodeTypeValue
+		return nil //We're done here
+	}
+
+	// The remaining case is this is a Path node. Work our way through each
+	// content Node pair depth first.
+	n.nodeType = ParameterTreeNodeTypePath
+
+	var errs error
+
+	for i := 0; i < len(value.Content); i += 2 {
+		nameNode := value.Content[i]
+		mapNode := value.Content[i+1]
+
+		if nameNode.Kind != yaml.ScalarNode {
+			errs = multierror.Append(
+				errs,
+				fmt.Errorf("node '%s' is not a scalar", nameNode.Value),
+			)
+		}
+
+		if mapNode.Kind != yaml.MappingNode {
+			errs = multierror.Append(
+				errs,
+				fmt.Errorf("node '%s' is not a map", mapNode.Value),
+			)
+		}
+
+		if nameNode.Kind == yaml.ScalarNode && mapNode.Kind == yaml.MappingNode {
+			// Create a child node
+			childNode, err := n.addBlankChildNode(nameNode.Value)
+			if err != nil {
+				errs = multierror.Append(errs, err)
+			}
+			//Decode the mapping node into the child node.
+			//Essentially calling childNode.UnmarshalYAML(mapNode) but with
+			//some extra checking. Might be better to just call directly?
+			derr := mapNode.Decode(childNode)
+			if derr != nil {
+				errs = multierror.Append(errs, derr)
+			}
+		}
+	}
+	return errs
+}
+
+func isValueNode(mapping *yaml.Node) bool {
+	if mapping.Kind != yaml.MappingNode {
+		log.Printf("tryValueNode: %s not a mapping node", mapping.Value)
+		return false
+	}
+
+	if len(mapping.Content)%2 != 0 {
+		log.Printf("tryValueNode: %s has an odd number of content nodes", mapping.Value)
+		return false
+	}
+
+	//Checking both that all names start with '_' and the nodes are the right
+	//types at the same time so we loop through one time, short circuiting
+	//as soon as we find a problem.
+	for i := 0; i < len(mapping.Content); i += 2 {
+		name := mapping.Content[i]
+		value := mapping.Content[i+1]
+		if name.Value == "_tags" && name.Kind == yaml.ScalarNode && value.Kind == yaml.MappingNode {
+			continue
+		} else if name.Value[0] == '_' && name.Kind == yaml.ScalarNode && value.Kind == yaml.ScalarNode {
+			continue
+		} else {
+			return false
+		}
+	}
+	return true
 }
