@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
+	"gopkg.in/yaml.v3"
 
-	"gitlab.com/dkub/ssmparams/exporter"
 	"gitlab.com/dkub/ssmparams/types"
 )
 
@@ -32,13 +32,13 @@ func (e *ExportApp) Exec() error {
 		log.Fatal("Error loading AWS config...", err)
 	}
 	e.client = ssm.NewFromConfig(config)
-	var params []types.ParameterPackage
+	var params []types.AwsParameterPackage
 	params, err = e.gatherParameters()
 	if err != nil {
 		return err
 	}
 	var yaml []byte
-	yaml, err = exporter.BuildYamlFromParams(params)
+	yaml, err = e.BuildYamlFromParamPackages(params)
 	if err != nil {
 		panic(err)
 	}
@@ -48,7 +48,15 @@ func (e *ExportApp) Exec() error {
 	return nil
 }
 
-func (e *ExportApp) gatherParameters() ([]types.ParameterPackage, error) {
+func (e *ExportApp) BuildYamlFromParamPackages(params []types.AwsParameterPackage) ([]byte, error) {
+	paramTree := types.NewParameterTree()
+	for _, param := range params {
+		paramTree.AddParamFromPackage(param)
+	}
+	return yaml.Marshal(paramTree)
+}
+
+func (e *ExportApp) gatherParameters() ([]types.AwsParameterPackage, error) {
 	params := &ssm.GetParametersByPathInput{
 		Path:           &e.SsmPathRoot,
 		Recursive:      aws.Bool(true),
@@ -57,7 +65,7 @@ func (e *ExportApp) gatherParameters() ([]types.ParameterPackage, error) {
 
 	paginator := ssm.NewGetParametersByPathPaginator(e.client, params)
 
-	var parameters = []types.ParameterPackage{}
+	var parameters = []types.AwsParameterPackage{}
 
 	for paginator.HasMorePages() {
 		output, err := paginator.NextPage(context.TODO())
@@ -77,19 +85,19 @@ func (e *ExportApp) gatherParameters() ([]types.ParameterPackage, error) {
 	return parameters, nil
 }
 
-func (e *ExportApp) generatePackage(parameter ssmTypes.Parameter) (types.ParameterPackage, error) {
-	pkg := types.ParameterPackage{Parameter: parameter}
+func (e *ExportApp) generatePackage(parameter ssmTypes.Parameter) (types.AwsParameterPackage, error) {
+	pkg := types.AwsParameterPackage{Parameter: parameter}
 	var err error
 	if parameter.Type == ssmTypes.ParameterTypeSecureString {
 		pkg.Metadata, err = e.describeParameter(parameter)
 		if err != nil {
-			return types.ParameterPackage{}, err
+			return types.AwsParameterPackage{}, err
 		}
 	}
 
 	pkg.Tags, err = e.getTags(parameter)
 	if err != nil {
-		return types.ParameterPackage{}, err
+		return types.AwsParameterPackage{}, err
 	}
 
 	return pkg, nil

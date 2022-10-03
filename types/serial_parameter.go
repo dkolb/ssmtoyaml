@@ -37,7 +37,7 @@ func NewSerialParameterFromMap(theMap map[string]interface{}) *SerialParameter {
 	return &returnVal
 }
 
-func NewSerialParameterFromPackage(parameter ParameterPackage) *SerialParameter {
+func NewSerialParameterFromPackage(parameter AwsParameterPackage) *SerialParameter {
 	param := SerialParameter{
 		Value: *parameter.Parameter.Value,
 		Type:  parameter.Parameter.Type,
