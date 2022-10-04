@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 
@@ -20,40 +21,68 @@ type GetApp struct {
 	Decrypt        bool
 	ForceOverwrite bool
 	Region         string
+	IgnoreTags     bool
 	client         *ssm.Client
 }
 
-func (e *GetApp) Exec() error {
-	config, err := utils.AwsLoadConfig(&e.Region)
+func (g *GetApp) Init() error {
+	config, err := utils.AwsLoadConfig(&g.Region)
 	if err != nil {
 		log.Printf("Failed to load AWS config: %v", err)
 		return err
 	}
-	e.client = ssm.NewFromConfig(*config)
+	g.client = ssm.NewFromConfig(*config)
+	return nil
+}
+
+func (g *GetApp) Exec() error {
+	var err error
+
+	if g.client == nil {
+		err = g.Init()
+		if err != nil {
+			return err
+		}
+	}
+
+	//Validate file doesn't exist or force overwrite is set
+	//so we don't waste time crawling the SSM API.
+	if !g.ForceOverwrite {
+		_, err = os.Stat(g.ExportFile)
+		fileExists := !errors.Is(err, os.ErrNotExist)
+		if fileExists {
+			return errors.New("cannot overwrite file provide --overwrite")
+		}
+	}
 
 	//Gather parameters under path.
 	var params []types.AwsParameterPackage
-	params, err = e.gatherParameters()
+	params, err = g.gatherParameters()
 	if err != nil {
 		return err
 	}
 
 	//Generate YAML.
 	var yaml []byte
-	yaml, err = e.BuildYamlFromParamPackages(params)
+	yaml, err = g.BuildYamlFromParamPackages(params)
 	if err != nil {
 		return err
 	}
 
 	//Write out to file.
-	if err = os.WriteFile(e.ExportFile, yaml, 0666); err != nil {
+	_, err = os.Stat(g.ExportFile)
+	fileExists := !errors.Is(err, os.ErrNotExist)
+	if fileExists && !g.ForceOverwrite {
+		return errors.New("cannot overwrite file provide --overwrite")
+	}
+	if err = os.WriteFile(g.ExportFile, yaml, 0666); err != nil {
 		log.Println(err)
 		return err
 	}
 	return nil
 }
 
-func (e *GetApp) BuildYamlFromParamPackages(params []types.AwsParameterPackage) ([]byte, error) {
+func (g *GetApp) BuildYamlFromParamPackages(params []types.AwsParameterPackage) ([]byte, error) {
 	paramTree := types.NewParameterTree()
 	for _, param := range params {
 		paramTree.AddParamFromPackage(param)
@@ -61,14 +90,14 @@ func (e *GetApp) BuildYamlFromParamPackages(params []types.AwsParameterPackage) 
 	return yaml.Marshal(paramTree)
 }
 
-func (e *GetApp) gatherParameters() ([]types.AwsParameterPackage, error) {
+func (g *GetApp) gatherParameters() ([]types.AwsParameterPackage, error) {
 	params := &ssm.GetParametersByPathInput{
-		Path:           &e.SsmPathRoot,
+		Path:           &g.SsmPathRoot,
 		Recursive:      aws.Bool(true),
-		WithDecryption: new(bool),
+		WithDecryption: aws.Bool(g.Decrypt),
 	}
 
-	paginator := ssm.NewGetParametersByPathPaginator(e.client, params)
+	paginator := ssm.NewGetParametersByPathPaginator(g.client, params)
 
 	var parameters = []types.AwsParameterPackage{}
 
@@ -80,7 +109,7 @@ func (e *GetApp) gatherParameters() ([]types.AwsParameterPackage, error) {
 		}
 
 		for _, param := range output.Parameters {
-			pkg, err := e.generatePackage(param)
+			pkg, err := g.generatePackage(param)
 			if err != nil {
 				return parameters, err
 			}
@@ -90,17 +119,19 @@ func (e *GetApp) gatherParameters() ([]types.AwsParameterPackage, error) {
 	return parameters, nil
 }
 
-func (e *GetApp) generatePackage(parameter ssmTypes.Parameter) (types.AwsParameterPackage, error) {
+func (g *GetApp) generatePackage(parameter ssmTypes.Parameter) (types.AwsParameterPackage, error) {
 	pkg := types.AwsParameterPackage{Parameter: parameter}
 	var err error
 	if parameter.Type == ssmTypes.ParameterTypeSecureString {
-		pkg.Metadata, err = e.describeParameter(parameter)
+		pkg.Metadata, err = g.describeParameter(parameter)
 		if err != nil {
 			return types.AwsParameterPackage{}, err
 		}
 	}
 
-	pkg.Tags, err = e.getTags(parameter)
+	if !g.IgnoreTags {
+		pkg.Tags, err = g.getTags(parameter)
+	}
 	if err != nil {
 		return types.AwsParameterPackage{}, err
 	}
@@ -108,12 +139,12 @@ func (e *GetApp) generatePackage(parameter ssmTypes.Parameter) (types.AwsParamet
 	return pkg, nil
 }
 
-func (e *GetApp) describeParameter(parameter ssmTypes.Parameter) (ssmTypes.ParameterMetadata, error) {
+func (g *GetApp) describeParameter(parameter ssmTypes.Parameter) (ssmTypes.ParameterMetadata, error) {
 	paramFilter := ssmTypes.ParameterStringFilter{
 		Key:    aws.String("Name"),
 		Values: []string{*parameter.Name},
 	}
-	describeResponse, err := e.client.DescribeParameters(
+	describeResponse, err := g.client.DescribeParameters(
 		context.TODO(),
 		&ssm.DescribeParametersInput{
 			ParameterFilters: []ssmTypes.ParameterStringFilter{paramFilter},
@@ -128,8 +159,8 @@ func (e *GetApp) describeParameter(parameter ssmTypes.Parameter) (ssmTypes.Param
 	return describeResponse.Parameters[0], nil
 }
 
-func (e *GetApp) getTags(parameter ssmTypes.Parameter) ([]ssmTypes.Tag, error) {
-	tagResponse, err := e.client.ListTagsForResource(
+func (g *GetApp) getTags(parameter ssmTypes.Parameter) ([]ssmTypes.Tag, error) {
+	tagResponse, err := g.client.ListTagsForResource(
 		context.TODO(),
 		&ssm.ListTagsForResourceInput{
 			ResourceId:   parameter.Name,

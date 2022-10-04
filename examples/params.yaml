@@ -1,0 +1,10 @@
+---
+ExampleApp:
+  development:
+    MyConfigSetting:
+      _value: A value
+      _type: String
+    MySecretConfigSetting:
+      _value: A value
+      _type: SecureString
+      _key: alias/some-symmectric-key

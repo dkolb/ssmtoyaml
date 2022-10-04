@@ -66,16 +66,29 @@ func (im *PutApp) Exec() error {
 
 	data, err := os.ReadFile(im.File)
 	if err != nil {
-		log.Println("failed to init ssm client", err)
+		log.Printf("failed to open file %s: %v", im.File, err)
 		return err
 	}
 
 	var paramTree *types.ParameterTree
 	paramTree, err = im.UnmarshalData(data)
-
 	if err != nil {
-		log.Println("failed to unmarshal YAML file", err)
+		log.Printf("failed to parse file %s: %v", im.File, err)
 		return err
+	}
+
+	var tagMap types.ParameterTreeTags = make(map[string]string)
+	if len(im.TagFile) > 0 {
+		data, err = os.ReadFile(im.TagFile)
+		if err != nil {
+			log.Printf("failed to open file %s: %v", im.TagFile, err)
+			return err
+		}
+		err = yaml.Unmarshal(data, &tagMap)
+		if err != nil {
+			log.Printf("failed to parse file %s: %v", im.TagFile, err)
+			return err
+		}
 	}
 
 	var requests []*types.AwsRequestPackage
@@ -105,31 +118,28 @@ func (im *PutApp) Exec() error {
 func (im *PutApp) UnmarshalData(data []byte) (*types.ParameterTree, error) {
 	paramTree := types.NewParameterTree()
 	err := yaml.Unmarshal(data, paramTree)
-	fmt.Println(err)
 	return paramTree, err
 }
 
-func (im *PutApp) PrepareRequests(requestBatch []*types.AwsRequestPackage) error {
-	var errs error
+func (im *PutApp) PrepareRequests(requestBatch []*types.AwsRequestPackage) {
 	for _, request := range requestBatch {
 		exists := im.checkParamExists(*request)
 		request.SetExists(exists)
 	}
-	return errs
 }
 
 func (im *PutApp) MakeRequests(requestBatch []*types.AwsRequestPackage) error {
-	var errs error
+	var errs *multierror.Error
 	for _, request := range requestBatch {
-		_, err := im.ssm.PutParameter(context.TODO(), &request.PutParam)
+		_, err := im.ssm.PutParameter(context.TODO(), request.PutParam)
+		errs = multierror.Append(errs, err)
 		if err != nil {
-			errs = multierror.Append(errs, err)
 			continue //Don't try to add tags to a param that returned an error
 		}
-		_, err = im.ssm.AddTagsToResource(context.TODO(), &request.AddTags)
+		_, err = im.ssm.AddTagsToResource(context.TODO(), request.AddTags)
 		errs = multierror.Append(errs, err)
 	}
-	return errs
+	return errs.ErrorOrNil()
 }
 
 func (im *PutApp) Report(requestBatch []*types.AwsRequestPackage) error {
@@ -203,5 +213,5 @@ func (im *PutApp) checkParamExists(req types.AwsRequestPackage) bool {
 
 	var nferr *ssmTypes.ParameterNotFound
 
-	return err != nil && errors.As(err, &nferr)
+	return err == nil || !errors.As(err, &nferr)
 }

@@ -24,6 +24,7 @@ environments.`,
 			Decrypt:        Decrypt,
 			ForceOverwrite: ForceOverwrite,
 			Region:         Region,
+			IgnoreTags:     IgnoreTags,
 		}
 
 		err := exportApp.Exec()
@@ -40,6 +41,7 @@ var (
 	Decrypt        bool
 	PathRoot       string
 	ForceOverwrite bool
+	IgnoreTags     bool
 )
 
 func init() {
@@ -58,8 +60,8 @@ func init() {
 	// flag pkg.
 	getCmd.Flags().StringVarP(
 		&FilePath,
-		"file",
-		"f",
+		"out-file",
+		"o",
 		"./ssmparams_out.yaml",
 		"The file to write YAML commands out to.",
 	)
@@ -78,6 +80,21 @@ func init() {
 		"r",
 		"/",
 		"A path root to retrieve from.",
+	)
+
+	getCmd.Flags().BoolVar(
+		&IgnoreTags,
+		"ignore-tags",
+		false,
+		"Do not write _tags keys to the output file.",
+	)
+
+	getCmd.Flags().BoolVarP(
+		&ForceOverwrite,
+		"force-overwrite",
+		"f",
+		false,
+		"Overwrite the --out-file if it exists.",
 	)
 
 	getCmd.MarkFlagFilename("file")

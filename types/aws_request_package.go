@@ -8,8 +8,8 @@ import (
 
 type AwsRequestPackage struct {
 	exists   bool
-	PutParam ssm.PutParameterInput
-	AddTags  ssm.AddTagsToResourceInput
+	PutParam *ssm.PutParameterInput
+	AddTags  *ssm.AddTagsToResourceInput
 }
 
 func (r *AwsRequestPackage) SetExists(exists bool) {
@@ -65,8 +65,8 @@ func AwsRequestPackagesFromParameterTree(
 		}
 
 		requests = append(requests, &AwsRequestPackage{
-			PutParam: putReq,
-			AddTags: ssm.AddTagsToResourceInput{
+			PutParam: &putReq,
+			AddTags: &ssm.AddTagsToResourceInput{
 				ResourceId:   aws.String(path),
 				ResourceType: ssmTypes.ResourceTypeForTaggingParameter,
 				Tags:         tags,

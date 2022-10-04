@@ -82,11 +82,12 @@ func init() {
 	// putCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	putCmd.Flags().StringVarP(
 		&File,
-		"file",
-		"f",
+		"in-file",
+		"i",
 		"",
 		"File to import into SSM.",
 	)
+
 	putCmd.Flags().StringVarP(
 		&TagFile,
 		"tags",
@@ -94,6 +95,7 @@ func init() {
 		"",
 		"A file containing a YAML map of TagName: TagValue pairs to add to all parameters",
 	)
+
 	putCmd.Flags().BoolVar(
 		&InteractiveDisabled,
 		"no-interact",
