@@ -12,16 +12,20 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "ssmparams",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "A program for managing your SSM params as YAML files.",
+	Long: `This program allows you to export your SSM parameters into a
+YAML file that represents their Path-Like naming structure and manage their
+values and some attributes.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+This is a rewrite of a ruby gem I also authored.`,
+	DisableAutoGenTag: true,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
+}
+
+func GetRootCmd() *cobra.Command {
+	return rootCmd
 }
 
 var Region string

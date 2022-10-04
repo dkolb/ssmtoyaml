@@ -34,6 +34,7 @@ environments.`,
 			os.Exit(0)
 		}
 	},
+	DisableAutoGenTag: true,
 }
 
 var (

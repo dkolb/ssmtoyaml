@@ -55,6 +55,7 @@ BudgetCode:> MYAPP
 			os.Exit(0)
 		}
 	},
+	DisableAutoGenTag: true,
 }
 
 var (
