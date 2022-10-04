@@ -24,11 +24,12 @@ type GetApp struct {
 }
 
 func (e *GetApp) Exec() error {
-	var err error
-	e.client, err = utils.InitializeSsmClient(&e.Region)
+	config, err := utils.AwsLoadConfig(&e.Region)
 	if err != nil {
+		log.Printf("Failed to load AWS config: %v", err)
 		return err
 	}
+	e.client = ssm.NewFromConfig(*config)
 
 	//Gather parameters under path.
 	var params []types.AwsParameterPackage
