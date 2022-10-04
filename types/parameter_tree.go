@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"github.com/hashicorp/go-multierror"
@@ -30,6 +31,12 @@ func (p *ParameterTree) AddParamFromPackage(pkg AwsParameterPackage) {
 	p.root.recursiveAddValueNode(pathElements, value)
 }
 
+func (p *ParameterTree) ForAllValues(
+	visit func(path string, value *ParameterTreeValue) error,
+) error {
+	return p.root.depthFirstWalk([]string{}, visit)
+}
+
 func (p *ParameterTree) MarshalYAML() (interface{}, error) {
 	return p.root.MarshalYAML()
 }
@@ -46,10 +53,11 @@ func (p *ParameterTree) UnmarshalYAML(value *yaml.Node) error {
 type ParameterTreeTags map[string]string
 
 type ParameterTreeValue struct {
-	Type  ssmTypes.ParameterType `yaml:"_type"`
-	Value string                 `yaml:"_value"`
-	Key   string                 `yaml:"_key,omitempty"`
-	Tags  ParameterTreeTags      `yaml:"_tags,omitempty"`
+	Type        ssmTypes.ParameterType `yaml:"_type"`
+	Value       string                 `yaml:"_value"`
+	Key         string                 `yaml:"_key,omitempty"`
+	Tags        ParameterTreeTags      `yaml:"_tags,omitempty"`
+	Description string                 `yaml:"_desc,omitempty"`
 }
 
 func NewParameterTreeValueFromPackage(pkg AwsParameterPackage) *ParameterTreeValue {
@@ -201,6 +209,25 @@ func (n *ParameterTreeNode) recursiveAddValueNode(nodeNames []string, value *Par
 				return node.recursiveAddValueNode(nodeNames[1:], value)
 			}
 		}
+	}
+}
+
+func (n *ParameterTreeNode) depthFirstWalk(
+	pathElements []string,
+	visit func(path string, value *ParameterTreeValue) error,
+) error {
+	if n.nodeType == ParameterTreeNodeTypeValue {
+		//Base case
+		return visit("/"+strings.Join(pathElements, "/"), n.value)
+	} else if n.nodeType == ParameterTreeNodeTypePath {
+		var errs error
+		for name, child := range n.children {
+			err := child.depthFirstWalk(append(pathElements, name), visit)
+			multierror.Append(errs, err)
+		}
+		return errs
+	} else {
+		return fmt.Errorf("Unknown node type")
 	}
 }
 

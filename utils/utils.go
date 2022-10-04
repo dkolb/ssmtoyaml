@@ -6,10 +6,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
-func InitializeSsmClient(region *string) (*ssm.Client, error) {
+func AwsLoadConfig(region *string) (*aws.Config, error) {
 	var (
 		conf aws.Config
 		err  error
@@ -28,5 +27,5 @@ func InitializeSsmClient(region *string) (*ssm.Client, error) {
 	if err != nil {
 		log.Println("error loading default config:", err)
 	}
-	return ssm.NewFromConfig(conf), err
+	return &conf, err
 }

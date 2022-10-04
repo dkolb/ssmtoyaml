@@ -14,19 +14,39 @@ import (
 // putCmd represents the put command
 var putCmd = &cobra.Command{
 	Use:   "put",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Put YAML file of parameters into SSM Parameter store.",
+	Long: `This command will import a YAML file into SSM Parameter store. The file
+should be of the following format. In this example, a parameter of the name
+/Application/Dev/MySetting will be created.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+---
+Application:
+  Dev:
+	  MySetting:
+		  _type: SecureString
+			_value: MySettingValue
+			_key: alias/basic-data-symmetric
+			_tags:
+			  Component: MyApp
+				Environment: Dev
+				BudgetCode: MYAPP
+
+If provided, a separate YAML file can provide the tags in one place. These tags
+will override each _tag value in your input file.  Example tag file:
+
+---
+Component: MyApp
+Environment: Dev
+BudgetCode:> MYAPP
+`,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		importApp := app.ImportApp{
-			File:                File,
-			InteractiveDisabled: InteractiveDisabled,
-			RetryLimit:          RetryLimit,
-			Region:              Region,
+		importApp := app.PutApp{
+			File:        File,
+			TagFile:     TagFile,
+			Interactive: !InteractiveDisabled,
+			RetryLimit:  RetryLimit,
+			Region:      Region,
 		}
 		err := importApp.Exec()
 		if err != nil {
@@ -39,7 +59,9 @@ to quickly create a Cobra application.`,
 
 var (
 	File                string
+	TagFile             string
 	InteractiveDisabled bool
+	InteractiveEnabled  bool
 	RetryLimit          int
 )
 
@@ -65,6 +87,13 @@ func init() {
 		"",
 		"File to import into SSM.",
 	)
+	putCmd.Flags().StringVarP(
+		&TagFile,
+		"tags",
+		"t",
+		"",
+		"A file containing a YAML map of TagName: TagValue pairs to add to all parameters",
+	)
 	putCmd.Flags().BoolVar(
 		&InteractiveDisabled,
 		"no-interact",
@@ -77,7 +106,6 @@ func init() {
 		3,
 		"Limit on retries for failed parameter updates.",
 	)
-
 	putCmd.MarkFlagFilename("file")
 	putCmd.MarkFlagRequired("file")
 }

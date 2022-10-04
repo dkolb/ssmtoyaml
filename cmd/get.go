@@ -18,7 +18,7 @@ var getCmd = &cobra.Command{
 into a well structured YAML document for ease of editing or copying between
 environments.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		exportApp := &app.ExportApp{
+		exportApp := &app.GetApp{
 			SsmPathRoot:    PathRoot,
 			ExportFile:     FilePath,
 			Decrypt:        Decrypt,
