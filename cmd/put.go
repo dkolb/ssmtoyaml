@@ -22,14 +22,14 @@ should be of the following format. In this example, a parameter of the name
 ---
 Application:
   Dev:
-	  MySetting:
-		  _type: SecureString
-			_value: MySettingValue
-			_key: alias/basic-data-symmetric
-			_tags:
-			  Component: MyApp
-				Environment: Dev
-				BudgetCode: MYAPP
+    MySetting:
+      _type: SecureString
+      _value: MySettingValue
+      _key: alias/basic-data-symmetric
+      _tags:
+        Component: MyApp
+        Environment: Dev
+        BudgetCode: MYAPP
 
 If provided, a separate YAML file can provide the tags in one place. These tags
 will override each _tag value in your input file.  Example tag file:
