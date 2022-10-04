@@ -37,7 +37,7 @@ will override each _tag value in your input file.  Example tag file:
 ---
 Component: MyApp
 Environment: Dev
-BudgetCode:> MYAPP
+BudgetCode: MYAPP
 `,
 	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
