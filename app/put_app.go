@@ -19,8 +19,8 @@ import (
 	"github.com/manifoldco/promptui"
 	"gopkg.in/yaml.v3"
 
-	"gitlab.com/dkub/ssmparams/types"
-	"gitlab.com/dkub/ssmparams/utils"
+	"gitlab.com/dkub/ssmtoyaml/types"
+	"gitlab.com/dkub/ssmtoyaml/utils"
 )
 
 type PutApp struct {

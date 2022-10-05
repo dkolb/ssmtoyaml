@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra/doc"
-	"gitlab.com/dkub/ssmparams/cmd"
-	"gitlab.com/dkub/ssmparams/utils"
+	"gitlab.com/dkub/ssmtoyaml/cmd"
+	"gitlab.com/dkub/ssmtoyaml/utils"
 )
 
 func main() {

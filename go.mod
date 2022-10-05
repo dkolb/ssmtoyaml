@@ -1,4 +1,4 @@
-module gitlab.com/dkub/ssmparams
+module gitlab.com/dkub/ssmtoyaml
 
 go 1.19
 

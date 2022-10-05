@@ -11,8 +11,8 @@ import (
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"gopkg.in/yaml.v3"
 
-	"gitlab.com/dkub/ssmparams/types"
-	"gitlab.com/dkub/ssmparams/utils"
+	"gitlab.com/dkub/ssmtoyaml/types"
+	"gitlab.com/dkub/ssmtoyaml/utils"
 )
 
 type GetApp struct {
