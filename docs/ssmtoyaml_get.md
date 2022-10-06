@@ -1,4 +1,4 @@
-## ssmparams get
+## ssmtoyaml get
 
 Retrieves an entire tree of your SSM param store as a YAML document.
 
@@ -9,7 +9,7 @@ into a well structured YAML document for ease of editing or copying between
 environments.
 
 ```
-ssmparams get [flags]
+ssmtoyaml get [flags]
 ```
 
 ### Options
@@ -19,7 +19,7 @@ ssmparams get [flags]
   -f, --force-overwrite   Overwrite the --out-file if it exists.
   -h, --help              help for get
       --ignore-tags       Do not write _tags keys to the output file.
-  -o, --out-file string   The file to write YAML commands out to. (default "./ssmparams_out.yaml")
+  -o, --out-file string   The file to write YAML commands out to. (default "./ssmtoyaml_out.yaml")
   -r, --ssm-root string   A path root to retrieve from. (default "/")
 ```
 
@@ -31,5 +31,5 @@ ssmparams get [flags]
 
 ### SEE ALSO
 
-* [ssmparams](docs/ssmparams.md)	 - A program for managing your SSM params as YAML files.
+* [ssmtoyaml](docs/ssmtoyaml.md)	 - A program for managing your SSM params as YAML files.
 

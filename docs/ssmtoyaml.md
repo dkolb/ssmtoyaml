@@ -1,4 +1,4 @@
-## ssmparams
+## ssmtoyaml
 
 A program for managing your SSM params as YAML files.
 
@@ -13,12 +13,12 @@ This is a rewrite of a ruby gem I also authored.
 ### Options
 
 ```
-  -h, --help            help for ssmparams
+  -h, --help            help for ssmtoyaml
       --region string   AWS Region to run against. (default "us-east-1")
 ```
 
 ### SEE ALSO
 
-* [ssmparams get](docs/ssmparams_get.md)	 - Retrieves an entire tree of your SSM param store as a YAML document.
-* [ssmparams put](docs/ssmparams_put.md)	 - Put YAML file of parameters into SSM Parameter store.
+* [ssmtoyaml get](docs/ssmtoyaml_get.md)	 - Retrieves an entire tree of your SSM param store as a YAML document.
+* [ssmtoyaml put](docs/ssmtoyaml_put.md)	 - Put YAML file of parameters into SSM Parameter store.
 

@@ -63,7 +63,7 @@ func init() {
 		&FilePath,
 		"out-file",
 		"o",
-		"./ssmparams_out.yaml",
+		"./ssmtoyaml_out.yaml",
 		"The file to write YAML commands out to.",
 	)
 

@@ -1,4 +1,4 @@
-## ssmparams
+## ssmtoyaml
 
 A program for managing your SSM params as YAML files.
 
@@ -13,16 +13,16 @@ This is a rewrite of a ruby gem I also authored.
 ### Options
 
 ```
-  -h, --help            help for ssmparams
+  -h, --help            help for ssmtoyaml
       --region string   AWS Region to run against. (default "us-east-1")
 ```
 
 ### SEE ALSO
 
-* [ssmparams get](docs/ssmparams_get.md)	 - Retrieves an entire tree of your SSM param store as a YAML document.
-* [ssmparams put](docs/ssmparams_put.md)	 - Put YAML file of parameters into SSM Parameter store.
+* [ssmtoyaml get](docs/ssmtoyaml_get.md)	 - Retrieves an entire tree of your SSM param store as a YAML document.
+* [ssmtoyaml put](docs/ssmtoyaml_put.md)	 - Put YAML file of parameters into SSM Parameter store.
 
-## ssmparams get
+## ssmtoyaml get
 
 Retrieves an entire tree of your SSM param store as a YAML document.
 
@@ -33,7 +33,7 @@ into a well structured YAML document for ease of editing or copying between
 environments.
 
 ```
-ssmparams get [flags]
+ssmtoyaml get [flags]
 ```
 
 ### Options
@@ -43,7 +43,7 @@ ssmparams get [flags]
   -f, --force-overwrite   Overwrite the --out-file if it exists.
   -h, --help              help for get
       --ignore-tags       Do not write _tags keys to the output file.
-  -o, --out-file string   The file to write YAML commands out to. (default "./ssmparams_out.yaml")
+  -o, --out-file string   The file to write YAML commands out to. (default "./ssmtoyaml_out.yaml")
   -r, --ssm-root string   A path root to retrieve from. (default "/")
 ```
 
@@ -55,9 +55,9 @@ ssmparams get [flags]
 
 ### SEE ALSO
 
-* [ssmparams](docs/ssmparams.md)	 - A program for managing your SSM params as YAML files.
+* [ssmtoyaml](docs/ssmtoyaml.md)	 - A program for managing your SSM params as YAML files.
 
-## ssmparams put
+## ssmtoyaml put
 
 Put YAML file of parameters into SSM Parameter store.
 
@@ -67,7 +67,6 @@ This command will import a YAML file into SSM Parameter store. The file
 should be of the following format. In this example, a parameter of the name
 /Application/Dev/MySetting will be created.
 
-```yaml
 ---
 Application:
   Dev:
@@ -79,21 +78,18 @@ Application:
         Component: MyApp
         Environment: Dev
         BudgetCode: MYAPP
-```
 
 If provided, a separate YAML file can provide the tags in one place. These tags
 will override each _tag value in your input file.  Example tag file:
 
-```yaml
 ---
 Component: MyApp
 Environment: Dev
 BudgetCode: MYAPP
-```
 
 
 ```
-ssmparams put [flags]
+ssmtoyaml put [flags]
 ```
 
 ### Options
@@ -114,5 +110,5 @@ ssmparams put [flags]
 
 ### SEE ALSO
 
-* [ssmparams](docs/ssmparams.md)	 - A program for managing your SSM params as YAML files.
+* [ssmtoyaml](docs/ssmtoyaml.md)	 - A program for managing your SSM params as YAML files.
 

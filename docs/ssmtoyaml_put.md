@@ -1,4 +1,4 @@
-## ssmparams put
+## ssmtoyaml put
 
 Put YAML file of parameters into SSM Parameter store.
 
@@ -8,7 +8,6 @@ This command will import a YAML file into SSM Parameter store. The file
 should be of the following format. In this example, a parameter of the name
 /Application/Dev/MySetting will be created.
 
-```yaml
 ---
 Application:
   Dev:
@@ -20,21 +19,18 @@ Application:
         Component: MyApp
         Environment: Dev
         BudgetCode: MYAPP
-```
 
 If provided, a separate YAML file can provide the tags in one place. These tags
 will override each _tag value in your input file.  Example tag file:
 
-```yaml
 ---
 Component: MyApp
 Environment: Dev
 BudgetCode: MYAPP
-```
 
 
 ```
-ssmparams put [flags]
+ssmtoyaml put [flags]
 ```
 
 ### Options
@@ -55,5 +51,5 @@ ssmparams put [flags]
 
 ### SEE ALSO
 
-* [ssmparams](docs/ssmparams.md)	 - A program for managing your SSM params as YAML files.
+* [ssmtoyaml](docs/ssmtoyaml.md)	 - A program for managing your SSM params as YAML files.
 
