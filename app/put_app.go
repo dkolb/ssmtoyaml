@@ -93,7 +93,7 @@ func (im *PutApp) Exec() error {
 
 	var requests []*types.AwsRequestPackage
 
-	requests, err = types.AwsRequestPackagesFromParameterTree(paramTree, nil)
+	requests, err = types.AwsRequestPackagesFromParameterTree(paramTree, &tagMap)
 
 	if err != nil {
 		log.Println("failed to convert param tree to requests", err)
