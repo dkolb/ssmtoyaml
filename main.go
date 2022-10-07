@@ -23,9 +23,9 @@ func main() {
 func generateDocs() {
 	dir := utils.EnvWithDefault("GEN_DOCS_DIR", "./docs")
 	linkPrefix := utils.EnvWithDefault("GEN_DOCS_LINK_PREFIX", "docs/")
-	ssmparams := cmd.GetRootCmd()
+	ssmtoyaml := cmd.GetRootCmd()
 	err := doc.GenMarkdownTreeCustom(
-		ssmparams,
+		ssmtoyaml,
 		dir,
 		func(filename string) string { return "" },
 		func(name string) string { return linkPrefix + name },
