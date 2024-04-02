@@ -2,6 +2,10 @@ module github.com/dkolb/ssmtoyaml
 
 go 1.22
 
+retract (
+	v0.1.4 //Bad module paths
+)
+
 require (
 	github.com/aquasecurity/table v1.8.0
 	github.com/aws/aws-sdk-go-v2 v1.26.1
