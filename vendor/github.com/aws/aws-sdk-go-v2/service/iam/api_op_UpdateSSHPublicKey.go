@@ -4,8 +4,8 @@ package iam
 
 import (
 	"context"
+	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -17,8 +17,7 @@ import (
 // flow. The SSH public key affected by this operation is used only for
 // authenticating the associated IAM user to an CodeCommit repository. For more
 // information about using SSH keys to authenticate to an CodeCommit repository,
-// see Set up CodeCommit for SSH connections
-// (https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-credentials-ssh.html)
+// see Set up CodeCommit for SSH connections (https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-credentials-ssh.html)
 // in the CodeCommit User Guide.
 func (c *Client) UpdateSSHPublicKey(ctx context.Context, params *UpdateSSHPublicKeyInput, optFns ...func(*Options)) (*UpdateSSHPublicKeyOutput, error) {
 	if params == nil {
@@ -37,9 +36,9 @@ func (c *Client) UpdateSSHPublicKey(ctx context.Context, params *UpdateSSHPublic
 
 type UpdateSSHPublicKeyInput struct {
 
-	// The unique identifier for the SSH public key. This parameter allows (through its
-	// regex pattern (http://wikipedia.org/wiki/regex)) a string of characters that can
-	// consist of any upper or lowercased letter or digit.
+	// The unique identifier for the SSH public key. This parameter allows (through
+	// its regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
+	// that can consist of any upper or lowercased letter or digit.
 	//
 	// This member is required.
 	SSHPublicKeyId *string
@@ -52,8 +51,8 @@ type UpdateSSHPublicKeyInput struct {
 	Status types.StatusType
 
 	// The name of the IAM user associated with the SSH public key. This parameter
-	// allows (through its regex pattern (http://wikipedia.org/wiki/regex)) a string of
-	// characters consisting of upper and lowercase alphanumeric characters with no
+	// allows (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
+	// of characters consisting of upper and lowercase alphanumeric characters with no
 	// spaces. You can also include any of the following characters: _+=,.@-
 	//
 	// This member is required.
@@ -70,6 +69,9 @@ type UpdateSSHPublicKeyOutput struct {
 }
 
 func (c *Client) addOperationUpdateSSHPublicKeyMiddlewares(stack *middleware.Stack, options Options) (err error) {
+	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+		return err
+	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpUpdateSSHPublicKey{}, middleware.After)
 	if err != nil {
 		return err
@@ -78,34 +80,38 @@ func (c *Client) addOperationUpdateSSHPublicKeyMiddlewares(stack *middleware.Sta
 	if err != nil {
 		return err
 	}
+	if err := addProtocolFinalizerMiddlewares(stack, options, "UpdateSSHPublicKey"); err != nil {
+		return fmt.Errorf("add protocol finalizers: %v", err)
+	}
+
+	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
+		return err
+	}
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = addHTTPSignerV4Middleware(stack, options); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack); err != nil {
+	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -114,10 +120,16 @@ func (c *Client) addOperationUpdateSSHPublicKeyMiddlewares(stack *middleware.Sta
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
 	if err = addOpUpdateSSHPublicKeyValidationMiddleware(stack); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateSSHPublicKey(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -129,6 +141,9 @@ func (c *Client) addOperationUpdateSSHPublicKeyMiddlewares(stack *middleware.Sta
 	if err = addRequestResponseLogging(stack, options); err != nil {
 		return err
 	}
+	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -136,7 +151,6 @@ func newServiceMetadataMiddleware_opUpdateSSHPublicKey(region string) *awsmiddle
 	return &awsmiddleware.RegisterServiceMetadata{
 		Region:        region,
 		ServiceID:     ServiceID,
-		SigningName:   "iam",
 		OperationName: "UpdateSSHPublicKey",
 	}
 }

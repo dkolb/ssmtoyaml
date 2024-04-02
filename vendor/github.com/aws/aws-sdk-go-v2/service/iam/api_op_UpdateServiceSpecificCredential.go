@@ -4,14 +4,14 @@ package iam
 
 import (
 	"context"
+	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Sets the status of a service-specific credential to Active or Inactive.
+// Sets the status of a service-specific credential to Active or Inactive .
 // Service-specific credentials that are inactive cannot be used for authentication
 // to the service. This operation can be used to disable a user's service-specific
 // credential as part of a credential rotation work flow.
@@ -33,7 +33,7 @@ func (c *Client) UpdateServiceSpecificCredential(ctx context.Context, params *Up
 type UpdateServiceSpecificCredentialInput struct {
 
 	// The unique identifier of the service-specific credential. This parameter allows
-	// (through its regex pattern (http://wikipedia.org/wiki/regex)) a string of
+	// (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string of
 	// characters that can consist of any upper or lowercased letter or digit.
 	//
 	// This member is required.
@@ -44,12 +44,12 @@ type UpdateServiceSpecificCredentialInput struct {
 	// This member is required.
 	Status types.StatusType
 
-	// The name of the IAM user associated with the service-specific credential. If you
-	// do not specify this value, then the operation assumes the user whose credentials
-	// are used to call the operation. This parameter allows (through its regex pattern
-	// (http://wikipedia.org/wiki/regex)) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
+	// The name of the IAM user associated with the service-specific credential. If
+	// you do not specify this value, then the operation assumes the user whose
+	// credentials are used to call the operation. This parameter allows (through its
+	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
+	// consisting of upper and lowercase alphanumeric characters with no spaces. You
+	// can also include any of the following characters: _+=,.@-
 	UserName *string
 
 	noSmithyDocumentSerde
@@ -63,6 +63,9 @@ type UpdateServiceSpecificCredentialOutput struct {
 }
 
 func (c *Client) addOperationUpdateServiceSpecificCredentialMiddlewares(stack *middleware.Stack, options Options) (err error) {
+	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+		return err
+	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpUpdateServiceSpecificCredential{}, middleware.After)
 	if err != nil {
 		return err
@@ -71,34 +74,38 @@ func (c *Client) addOperationUpdateServiceSpecificCredentialMiddlewares(stack *m
 	if err != nil {
 		return err
 	}
+	if err := addProtocolFinalizerMiddlewares(stack, options, "UpdateServiceSpecificCredential"); err != nil {
+		return fmt.Errorf("add protocol finalizers: %v", err)
+	}
+
+	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
+		return err
+	}
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = addHTTPSignerV4Middleware(stack, options); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack); err != nil {
+	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -107,10 +114,16 @@ func (c *Client) addOperationUpdateServiceSpecificCredentialMiddlewares(stack *m
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
 	if err = addOpUpdateServiceSpecificCredentialValidationMiddleware(stack); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateServiceSpecificCredential(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -122,6 +135,9 @@ func (c *Client) addOperationUpdateServiceSpecificCredentialMiddlewares(stack *m
 	if err = addRequestResponseLogging(stack, options); err != nil {
 		return err
 	}
+	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -129,7 +145,6 @@ func newServiceMetadataMiddleware_opUpdateServiceSpecificCredential(region strin
 	return &awsmiddleware.RegisterServiceMetadata{
 		Region:        region,
 		ServiceID:     ServiceID,
-		SigningName:   "iam",
 		OperationName: "UpdateServiceSpecificCredential",
 	}
 }

@@ -6,22 +6,21 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Returns information about the signing certificates associated with the specified
-// IAM user. If none exists, the operation returns an empty list. Although each
-// user is limited to a small number of signing certificates, you can still
-// paginate the results using the MaxItems and Marker parameters. If the UserName
-// field is not specified, the user name is determined implicitly based on the
-// Amazon Web Services access key ID used to sign the request for this operation.
-// This operation works for access keys under the Amazon Web Services account.
-// Consequently, you can use this operation to manage Amazon Web Services account
-// root user credentials even if the Amazon Web Services account has no associated
-// users.
+// Returns information about the signing certificates associated with the
+// specified IAM user. If none exists, the operation returns an empty list.
+// Although each user is limited to a small number of signing certificates, you can
+// still paginate the results using the MaxItems and Marker parameters. If the
+// UserName field is not specified, the user name is determined implicitly based on
+// the Amazon Web Services access key ID used to sign the request for this
+// operation. This operation works for access keys under the Amazon Web Services
+// account. Consequently, you can use this operation to manage Amazon Web Services
+// account root user credentials even if the Amazon Web Services account has no
+// associated users.
 func (c *Client) ListSigningCertificates(ctx context.Context, params *ListSigningCertificatesInput, optFns ...func(*Options)) (*ListSigningCertificatesOutput, error) {
 	if params == nil {
 		params = &ListSigningCertificatesInput{}
@@ -47,16 +46,16 @@ type ListSigningCertificatesInput struct {
 
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true. If you do not include this
+	// specify, the IsTruncated response element is true . If you do not include this
 	// parameter, the number of items defaults to 100. Note that IAM might return fewer
 	// results, even when there are more results available. In that case, the
-	// IsTruncated response element returns true, and Marker contains a value to
+	// IsTruncated response element returns true , and Marker contains a value to
 	// include in the subsequent call that tells the service where to continue from.
 	MaxItems *int32
 
 	// The name of the IAM user whose signing certificates you want to examine. This
-	// parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)) a
-	// string of characters consisting of upper and lowercase alphanumeric characters
+	// parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex) )
+	// a string of characters consisting of upper and lowercase alphanumeric characters
 	// with no spaces. You can also include any of the following characters: _+=,.@-
 	UserName *string
 
@@ -75,11 +74,11 @@ type ListSigningCertificatesOutput struct {
 	// were truncated, you can make a subsequent pagination request using the Marker
 	// request parameter to retrieve more items. Note that IAM might return fewer than
 	// the MaxItems number of results even when there are more results available. We
-	// recommend that you check IsTruncated after every call to ensure that you receive
-	// all your results.
+	// recommend that you check IsTruncated after every call to ensure that you
+	// receive all your results.
 	IsTruncated bool
 
-	// When IsTruncated is true, this element is present and contains the value to use
+	// When IsTruncated is true , this element is present and contains the value to use
 	// for the Marker parameter in a subsequent pagination request.
 	Marker *string
 
@@ -90,6 +89,9 @@ type ListSigningCertificatesOutput struct {
 }
 
 func (c *Client) addOperationListSigningCertificatesMiddlewares(stack *middleware.Stack, options Options) (err error) {
+	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+		return err
+	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpListSigningCertificates{}, middleware.After)
 	if err != nil {
 		return err
@@ -98,34 +100,38 @@ func (c *Client) addOperationListSigningCertificatesMiddlewares(stack *middlewar
 	if err != nil {
 		return err
 	}
+	if err := addProtocolFinalizerMiddlewares(stack, options, "ListSigningCertificates"); err != nil {
+		return fmt.Errorf("add protocol finalizers: %v", err)
+	}
+
+	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
+		return err
+	}
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = addHTTPSignerV4Middleware(stack, options); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack); err != nil {
+	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -134,7 +140,13 @@ func (c *Client) addOperationListSigningCertificatesMiddlewares(stack *middlewar
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListSigningCertificates(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -144,6 +156,9 @@ func (c *Client) addOperationListSigningCertificatesMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addRequestResponseLogging(stack, options); err != nil {
+		return err
+	}
+	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -162,10 +177,10 @@ var _ ListSigningCertificatesAPIClient = (*Client)(nil)
 type ListSigningCertificatesPaginatorOptions struct {
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true. If you do not include this
+	// specify, the IsTruncated response element is true . If you do not include this
 	// parameter, the number of items defaults to 100. Note that IAM might return fewer
 	// results, even when there are more results available. In that case, the
-	// IsTruncated response element returns true, and Marker contains a value to
+	// IsTruncated response element returns true , and Marker contains a value to
 	// include in the subsequent call that tells the service where to continue from.
 	Limit int32
 
@@ -251,7 +266,6 @@ func newServiceMetadataMiddleware_opListSigningCertificates(region string) *awsm
 	return &awsmiddleware.RegisterServiceMetadata{
 		Region:        region,
 		ServiceID:     ServiceID,
-		SigningName:   "iam",
 		OperationName: "ListSigningCertificates",
 	}
 }

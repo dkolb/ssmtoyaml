@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
@@ -38,10 +37,10 @@ func (c *Client) GetUser(ctx context.Context, params *GetUserInput, optFns ...fu
 
 type GetUserInput struct {
 
-	// The name of the user to get information about. This parameter is optional. If it
-	// is not included, it defaults to the user making the request. This parameter
-	// allows (through its regex pattern (http://wikipedia.org/wiki/regex)) a string of
-	// characters consisting of upper and lowercase alphanumeric characters with no
+	// The name of the user to get information about. This parameter is optional. If
+	// it is not included, it defaults to the user making the request. This parameter
+	// allows (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
+	// of characters consisting of upper and lowercase alphanumeric characters with no
 	// spaces. You can also include any of the following characters: _+=,.@-
 	UserName *string
 
@@ -53,13 +52,11 @@ type GetUserOutput struct {
 
 	// A structure containing details about the IAM user. Due to a service issue,
 	// password last used data does not include password use from May 3, 2018 22:50 PDT
-	// to May 23, 2018 14:08 PDT. This affects last sign-in
-	// (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_finding-unused.html)
+	// to May 23, 2018 14:08 PDT. This affects last sign-in (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_finding-unused.html)
 	// dates shown in the IAM console and password last used dates in the IAM
-	// credential report
-	// (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html),
-	// and returned by this operation. If users signed in during the affected time, the
-	// password last used date that is returned is the date the user last signed in
+	// credential report (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html)
+	// , and returned by this operation. If users signed in during the affected time,
+	// the password last used date that is returned is the date the user last signed in
 	// before May 3, 2018. For users that signed in after May 23, 2018 14:08 PDT, the
 	// returned password last used date is accurate. You can use password last used
 	// information to identify unused credentials for deletion. For example, you might
@@ -79,6 +76,9 @@ type GetUserOutput struct {
 }
 
 func (c *Client) addOperationGetUserMiddlewares(stack *middleware.Stack, options Options) (err error) {
+	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+		return err
+	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpGetUser{}, middleware.After)
 	if err != nil {
 		return err
@@ -87,34 +87,38 @@ func (c *Client) addOperationGetUserMiddlewares(stack *middleware.Stack, options
 	if err != nil {
 		return err
 	}
+	if err := addProtocolFinalizerMiddlewares(stack, options, "GetUser"); err != nil {
+		return fmt.Errorf("add protocol finalizers: %v", err)
+	}
+
+	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
+		return err
+	}
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = addHTTPSignerV4Middleware(stack, options); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack); err != nil {
+	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -123,7 +127,13 @@ func (c *Client) addOperationGetUserMiddlewares(stack *middleware.Stack, options
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetUser(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -133,6 +143,9 @@ func (c *Client) addOperationGetUserMiddlewares(stack *middleware.Stack, options
 		return err
 	}
 	if err = addRequestResponseLogging(stack, options); err != nil {
+		return err
+	}
+	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -151,16 +164,25 @@ type UserExistsWaiterOptions struct {
 	// Set of options to modify how an operation is invoked. These apply to all
 	// operations invoked for this client. Use functional options on operation call to
 	// modify this list for per operation behavior.
+	//
+	// Passing options here is functionally equivalent to passing values to this
+	// config's ClientOptions field that extend the inner client's APIOptions directly.
 	APIOptions []func(*middleware.Stack) error
+
+	// Functional options to be passed to all operations invoked by this client.
+	//
+	// Function values that modify the inner APIOptions are applied after the waiter
+	// config's own APIOptions modifiers.
+	ClientOptions []func(*Options)
 
 	// MinDelay is the minimum amount of time to delay between retries. If unset,
 	// UserExistsWaiter will use default minimum delay of 1 seconds. Note that MinDelay
 	// must resolve to a value lesser than or equal to the MaxDelay.
 	MinDelay time.Duration
 
-	// MaxDelay is the maximum amount of time to delay between retries. If unset or set
-	// to zero, UserExistsWaiter will use default max delay of 120 seconds. Note that
-	// MaxDelay must resolve to value greater than or equal to the MinDelay.
+	// MaxDelay is the maximum amount of time to delay between retries. If unset or
+	// set to zero, UserExistsWaiter will use default max delay of 120 seconds. Note
+	// that MaxDelay must resolve to value greater than or equal to the MinDelay.
 	MaxDelay time.Duration
 
 	// LogWaitAttempts is used to enable logging for waiter retry attempts
@@ -250,6 +272,9 @@ func (w *UserExistsWaiter) WaitForOutput(ctx context.Context, params *GetUserInp
 
 		out, err := w.client.GetUser(ctx, params, func(o *Options) {
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range options.ClientOptions {
+				opt(o)
+			}
 		})
 
 		retryable, err := options.Retryable(ctx, params, out, err)
@@ -307,7 +332,6 @@ func newServiceMetadataMiddleware_opGetUser(region string) *awsmiddleware.Regist
 	return &awsmiddleware.RegisterServiceMetadata{
 		Region:        region,
 		ServiceID:     ServiceID,
-		SigningName:   "iam",
 		OperationName: "GetUser",
 	}
 }
