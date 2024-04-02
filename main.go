@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/dkolb/ssmtoyaml/cmd"
+	"github.com/dkolb/ssmtoyaml/utils"
 	"github.com/spf13/cobra/doc"
-	"gitlab.com/dkub/ssmtoyaml/cmd"
-	"gitlab.com/dkub/ssmtoyaml/utils"
 )
 
 func main() {

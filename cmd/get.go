@@ -6,8 +6,8 @@ package cmd
 import (
 	"os"
 
+	"github.com/dkolb/ssmtoyaml/app"
 	"github.com/spf13/cobra"
-	"gitlab.com/dkub/ssmtoyaml/app"
 )
 
 // getCmd represents the get command

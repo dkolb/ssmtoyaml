@@ -8,8 +8,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
-	"gitlab.com/dkub/ssmtoyaml/app"
-	"gitlab.com/dkub/ssmtoyaml/types"
+	"github.com/dkolb/ssmtoyaml/app"
+	"github.com/dkolb/ssmtoyaml/types"
 )
 
 func TestExec(t *testing.T) {

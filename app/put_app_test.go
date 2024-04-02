@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"gitlab.com/dkub/ssmtoyaml/app"
+	"github.com/dkolb/ssmtoyaml/app"
 	"gopkg.in/yaml.v3"
 )
 

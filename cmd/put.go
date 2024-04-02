@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"gitlab.com/dkub/ssmtoyaml/app"
+	"github.com/dkolb/ssmtoyaml/app"
 )
 
 // putCmd represents the put command

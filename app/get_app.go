@@ -11,8 +11,8 @@ import (
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"gopkg.in/yaml.v3"
 
-	"gitlab.com/dkub/ssmtoyaml/types"
-	"gitlab.com/dkub/ssmtoyaml/utils"
+	"github.com/dkolb/ssmtoyaml/types"
+	"github.com/dkolb/ssmtoyaml/utils"
 )
 
 type GetApp struct {
@@ -167,5 +167,9 @@ func (g *GetApp) getTags(parameter ssmTypes.Parameter) ([]ssmTypes.Tag, error) {
 			ResourceType: ssmTypes.ResourceTypeForTaggingParameter,
 		},
 	)
-	return tagResponse.TagList, err
+	if tagResponse == nil {
+		return nil, err
+	} else {
+		return tagResponse.TagList, err
+	}
 }
